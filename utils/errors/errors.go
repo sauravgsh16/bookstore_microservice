@@ -1,0 +1,21 @@
+package errors
+
+import (
+	"net/http"
+)
+
+// RestErr struct
+type RestErr struct {
+	Message string `json:"message"`
+	Status  int    `json:"status"`
+	Error   string `json:"error"`
+}
+
+// NewBadRequestError returns a bad request errror
+func NewBadRequestError(msg string) *RestErr {
+	return &RestErr{
+		Message: msg,
+		Status:  http.StatusBadRequest,
+		Error:   "bad_request",
+	}
+}
