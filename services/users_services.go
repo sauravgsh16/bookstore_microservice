@@ -11,5 +11,18 @@ func CreateUser(u users.User) (*users.User, *errors.RestErr) {
 		return nil, errors.NewBadRequestError("invalid user data")
 	}
 
-	return nil, nil
+	if err := u.Save(); err != nil {
+		return nil, err
+	}
+
+	return &u, nil
+}
+
+// GetUser returns user if present
+func GetUser(userID int64) (*users.User, *errors.RestErr) {
+	user := &users.User{}
+	if err := user.Get(userID); err != nil {
+		return nil, err
+	}
+	return user, nil
 }

@@ -4,7 +4,6 @@ package users
 
 import (
 	"strings"
-	"time"
 
 	"github.com/sauravgsh16/bookstore_users-api/utils/errors"
 )
@@ -25,6 +24,5 @@ func (u *User) Validate() *errors.RestErr {
 		return nil
 	}
 
-	time.Now()
 	return nil
 }
