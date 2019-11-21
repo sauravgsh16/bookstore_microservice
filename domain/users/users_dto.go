@@ -4,8 +4,6 @@ package users
 
 import (
 	"strings"
-
-	"github.com/sauravgsh16/bookstore_users-api/utils/errors"
 )
 
 // User struct
@@ -18,11 +16,12 @@ type User struct {
 }
 
 // Validate if the user fields are accepted
-func (u *User) Validate() *errors.RestErr {
+func (u *User) Validate() bool {
+	u.FirstName = strings.TrimSpace(u.FirstName)
+	u.LastName = strings.TrimSpace(u.LastName)
 	u.Email = strings.TrimSpace(strings.ToLower(u.Email))
 	if len(u.Email) == 0 {
-		return nil
+		return false
 	}
-
-	return nil
+	return true
 }

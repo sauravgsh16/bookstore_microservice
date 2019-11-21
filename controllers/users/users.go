@@ -11,12 +11,19 @@ import (
 	"github.com/sauravgsh16/bookstore_users-api/utils/errors"
 )
 
-// GetUser returns a user
-func GetUser(c *gin.Context) {
-	userID, err := strconv.ParseInt(c.Param("user_id"), 10, 64)
+func getUserID(idStr string) (int64, *errors.RestErr) {
+	uid, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		invErr := errors.NewBadRequestError("user id should be a number")
-		c.JSON(invErr.Status, invErr)
+		return 0, errors.NewBadRequestError("user id should be a number")
+	}
+	return uid, nil
+}
+
+// Get returns a user
+func Get(c *gin.Context) {
+	userID, err := getUserID(c.Param("user_id"))
+	if err != nil {
+		c.JSON(err.Status, err)
 		return
 	}
 
@@ -28,8 +35,8 @@ func GetUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
-// CreateUser creates a new user
-func CreateUser(c *gin.Context) {
+// Create creates a new user
+func Create(c *gin.Context) {
 	var user users.User
 
 	// ShouldBindJSON - read request body and unmarshals the []bytes to user
@@ -48,7 +55,48 @@ func CreateUser(c *gin.Context) {
 	c.JSON(http.StatusCreated, result)
 }
 
-// SearchUser searches all users
-func SearchUser(c *gin.Context) {
+// Update updates a user
+func Update(c *gin.Context) {
+	userID, err := getUserID(c.Param("user_id"))
+	if err != nil {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	var newUser users.User
+	if err := c.ShouldBindJSON(&newUser); err != nil {
+		bdErr := errors.NewBadRequestError(fmt.Sprintf("invalid json body %s", err.Error()))
+		c.JSON(bdErr.Status, bdErr)
+		return
+	}
+
+	newUser.ID = userID
+	isPartial := c.Request.Method == http.MethodPatch
+
+	result, updateErr := services.UpdateUser(newUser, isPartial)
+	if err != nil {
+		c.JSON(updateErr.Status, updateErr)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+// Delete a user from db
+func Delete(c *gin.Context) {
+	userID, err := getUserID(c.Param("user_id"))
+	if err != nil {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	if err := services.DeleteUser(userID); err != nil {
+		c.JSON(err.Status, err)
+		return
+	}
+	c.JSON(http.StatusOK, map[string]string{"status": "deleted"})
+}
+
+// Search searches all users
+func Search(c *gin.Context) {
 	c.String(http.StatusNotImplemented, "Implement me!!\n")
 }

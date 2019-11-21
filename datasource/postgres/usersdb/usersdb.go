@@ -7,7 +7,7 @@ import (
 	"log"
 
 	// postgres driver
-	"github.com/lib/pq"
+	_ "github.com/lib/pq"
 )
 
 const (
@@ -44,8 +44,6 @@ func init() {
 		panic(err)
 	}
 	log.Println("Successfully configured database")
-
-	pq.Error
 }
 
 func (db *dbConn) GetConn(ctx context.Context) *sql.Conn {

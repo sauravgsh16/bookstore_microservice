@@ -7,16 +7,20 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"strings"
+
+	"github.com/lib/pq"
 
 	"github.com/sauravgsh16/bookstore_users-api/datasource/postgres/usersdb"
 	"github.com/sauravgsh16/bookstore_users-api/utils/dates"
 	"github.com/sauravgsh16/bookstore_users-api/utils/errors"
+	"github.com/sauravgsh16/bookstore_users-api/utils/postgres"
 )
 
 const (
 	queryInsertUser = `INSERT INTO users(first_name, last_name, email, date_created) VALUES($1, $2, $3, $4) RETURNING ID;`
 	querySelectUser = `SELECT ID, first_name, last_name, email, date_created FROM users WHERE ID=($1);`
+	queryUpdateuser = `UPDATE users SET first_name=($1), last_name=($2), email=($3) WHERE ID=($4);`
+	queryDeleteUser = `DELETE FROM users WHERE ID=($1);`
 )
 
 var (
@@ -28,24 +32,53 @@ func getConn() (*sql.Conn, context.Context) {
 	return usersdb.DB.GetConn(ctx), ctx
 }
 
+func handleDBError(err error) *errors.RestErr {
+	err = postgres.ParseError(err)
+	dbErr, ok := err.(*pq.Error)
+	if ok {
+		return errors.NewBadRequestError(dbErr.Message)
+	}
+	return nil
+}
+
+// Get populates the user pointer or returns error if not found
+func (u *User) Get(userID int64) *errors.RestErr {
+	conn, ctx := getConn()
+	defer conn.Close()
+
+	stmt, err := conn.PrepareContext(ctx, querySelectUser)
+	if err != nil {
+		return errors.NewInternalServerError(err.Error())
+	}
+
+	row := stmt.QueryRowContext(ctx, userID)
+
+	if err := row.Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.DateCreated); err != nil {
+		if err := handleDBError(err); err != nil {
+			return err
+		}
+		return errors.NewNotFoundError(fmt.Sprintf("failed to retrieve rows: %s", err.Error()))
+	}
+	return nil
+}
+
 // Save the user to the db
 func (u *User) Save() *errors.RestErr {
 	conn, ctx := getConn()
+	defer conn.Close()
 
 	stmt, err := conn.PrepareContext(ctx, queryInsertUser)
 	if err != nil {
 		return errors.NewInternalServerError(err.Error())
 	}
-	defer conn.Close()
 
 	u.DateCreated = dates.GetNowString()
 
 	var returnedID int64
 
-	err = stmt.QueryRowContext(ctx, u.FirstName, u.LastName, u.Email, u.DateCreated).Scan(&returnedID)
-	if err != nil {
-		if strings.Contains(err.Error(), "users_email_key") {
-			return errors.NewBadRequestError(fmt.Sprintf("user \"%s\" already exists", u.Email))
+	if err = stmt.QueryRowContext(ctx, u.FirstName, u.LastName, u.Email, u.DateCreated).Scan(&returnedID); err != nil {
+		if err := handleDBError(err); err != nil {
+			return err
 		}
 		return errors.NewInternalServerError(fmt.Sprintf("error when trying to save user: %s", err.Error()))
 	}
@@ -54,29 +87,40 @@ func (u *User) Save() *errors.RestErr {
 	return nil
 }
 
-// Get populates the user pointer or returns error if not found
-func (u *User) Get(userID int64) *errors.RestErr {
+// Update the user in the db
+func (u *User) Update() *errors.RestErr {
 	conn, ctx := getConn()
-	stmt, err := conn.PrepareContext(ctx, querySelectUser)
+	defer conn.Close()
+
+	stmt, err := conn.PrepareContext(ctx, queryUpdateuser)
 	if err != nil {
 		return errors.NewInternalServerError(err.Error())
 	}
-	defer stmt.Close()
 
-	rows, err := stmt.QueryContext(ctx, userID)
-	if err != nil {
-		return errors.NewInternalServerError(fmt.Sprintf("failed to execute query: %s", err.Error()))
-	}
-	defer rows.Close()
-
-	if !rows.Next() {
-		if err := rows.Err(); err != nil {
-			return errors.NewInternalServerError(fmt.Sprintf("failed to retrieve rows from db: %s", err.Error()))
+	if _, err = stmt.ExecContext(ctx, u.FirstName, u.LastName, u.Email, u.ID); err != nil {
+		if err := handleDBError(err); err != nil {
+			return err
 		}
-		return errors.NewNotFoundError(fmt.Sprintf("User with ID: %d - not found", userID))
+		return errors.NewInternalServerError(fmt.Sprintf("error when trying to update user: %s", err.Error()))
 	}
-	if err := rows.Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.DateCreated); err != nil {
-		return errors.NewInternalServerError(fmt.Sprintf("failed to retrieve rows: %s", err.Error()))
+	return nil
+}
+
+// Delete user from db
+func (u *User) Delete() *errors.RestErr {
+	conn, ctx := getConn()
+	defer conn.Close()
+
+	stmt, err := conn.PrepareContext(ctx, queryDeleteUser)
+	if err != nil {
+		return errors.NewInternalServerError(err.Error())
+	}
+
+	if _, err = stmt.ExecContext(ctx, u.ID); err != nil {
+		if err := handleDBError(err); err != nil {
+			return err
+		}
+		return errors.NewInternalServerError(fmt.Sprintf("error when trying to delete user: %s", err.Error()))
 	}
 	return nil
 }
