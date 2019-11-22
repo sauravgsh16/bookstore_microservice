@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	CodeUniqueViolation              = "23505"
-	CodeNotNullViolation             = "23502"
-	CodeIntegrityConstraintViolation = "23000"
+	codeUniqueViolation              = "23505"
+	codeNotNullViolation             = "23502"
+	codeIntegrityConstraintViolation = "23000"
 )
 
 var (
@@ -19,6 +19,7 @@ var (
 	valPat = regexp.MustCompile(`Key \(.+\)=\((.+)\)`)
 )
 
+// DBError struct
 type DBError struct {
 	Message    string
 	Code       string
@@ -26,15 +27,18 @@ type DBError struct {
 	Constraint string
 }
 
+// Constraint struct
 type Constraint struct {
 	Name string
 }
 
+// Constraints contains map of user defined constraints
 type Constraints struct {
 	Map map[string]*Constraint
 	Mux sync.RWMutex
 }
 
+// Add new constraint
 func (c *Constraints) Add(name string) error {
 	c.Mux.Lock()
 	defer c.Mux.Unlock()
@@ -66,6 +70,7 @@ func findCol(s string) string {
 	return ""
 }
 
+// ParseError parses db errors
 func ParseError(err error) error {
 	if err == nil {
 		return nil
@@ -74,7 +79,7 @@ func ParseError(err error) error {
 	switch pqErr := err.(type) {
 	case *pq.Error:
 		switch pqErr.Code {
-		case CodeUniqueViolation:
+		case codeUniqueViolation:
 			var msg string
 			col := findCol(pqErr.Detail)
 			val := findValue(pqErr.Detail)
@@ -90,10 +95,10 @@ func ParseError(err error) error {
 				Constraint: pqErr.Constraint,
 			}
 
-		case CodeIntegrityConstraintViolation:
+		case codeIntegrityConstraintViolation:
 			panic("Not Implemented")
 
-		case CodeNotNullViolation:
+		case codeNotNullViolation:
 			msg := fmt.Sprintf("Column (%s) cannot be left blank", pqErr.Column)
 			return &DBError{
 				Message:    msg,

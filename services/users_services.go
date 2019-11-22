@@ -1,9 +1,9 @@
 package services
 
 import (
-	"fmt"
-
 	"github.com/sauravgsh16/bookstore_users-api/domain/users"
+	"github.com/sauravgsh16/bookstore_users-api/utils/crypto"
+	"github.com/sauravgsh16/bookstore_users-api/utils/dates"
 	"github.com/sauravgsh16/bookstore_users-api/utils/errors"
 )
 
@@ -12,6 +12,10 @@ func CreateUser(u users.User) (*users.User, *errors.RestErr) {
 	if valid := u.Validate(); !valid {
 		return nil, errors.NewBadRequestError("invalid user data")
 	}
+
+	u.DateCreated = dates.GetNowDBString()
+	u.Status = users.StatusActive
+	u.Password = crypto.GetMd5(u.Password)
 
 	if err := u.Save(); err != nil {
 		return nil, err
@@ -35,10 +39,6 @@ func UpdateUser(u users.User, isPatch bool) (*users.User, *errors.RestErr) {
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Printf("%#v\n", u)
-	fmt.Printf("%#v\n", current)
-	fmt.Printf("%v\n", isPatch)
 
 	if isPatch {
 		if u.FirstName != "" {
@@ -75,4 +75,10 @@ func DeleteUser(uid int64) *errors.RestErr {
 		return err
 	}
 	return nil
+}
+
+// Search returns users matching passed argument
+func Search(status string) (users.Users, *errors.RestErr) {
+	dao := users.User{}
+	return dao.FindByStatus(status)
 }

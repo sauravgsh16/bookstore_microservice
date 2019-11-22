@@ -6,6 +6,11 @@ import (
 	"strings"
 )
 
+const (
+	StatusActive   = "active"
+	StatusInactive = "inactive"
+)
+
 // User struct
 type User struct {
 	ID          int64  `json:"id"`
@@ -13,7 +18,12 @@ type User struct {
 	LastName    string `json:"last_name"`
 	Email       string `json:"email"`
 	DateCreated string `json:"date_created"`
+	Status      string `json:"status"`
+	Password    string `json:"password"`
 }
+
+// Users is a slice of users
+type Users []*User
 
 // Validate if the user fields are accepted
 func (u *User) Validate() bool {
@@ -21,6 +31,11 @@ func (u *User) Validate() bool {
 	u.LastName = strings.TrimSpace(u.LastName)
 	u.Email = strings.TrimSpace(strings.ToLower(u.Email))
 	if len(u.Email) == 0 {
+		return false
+	}
+
+	u.Password = strings.TrimSpace(u.Password)
+	if len(u.Password) == 0 {
 		return false
 	}
 	return true
