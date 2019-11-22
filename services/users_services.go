@@ -7,8 +7,25 @@ import (
 	"github.com/sauravgsh16/bookstore_users-api/utils/errors"
 )
 
+var (
+	// UserServ of type UserInterface derived from UserService struct
+	UserServ UserInterface = &UserService{}
+)
+
+// UserService struct
+type UserService struct{}
+
+// UserInterface describes methods to be implemented
+type UserInterface interface {
+	GetUser(int64) (*users.User, *errors.RestErr)
+	CreateUser(users.User) (*users.User, *errors.RestErr)
+	UpdateUser(users.User, bool) (*users.User, *errors.RestErr)
+	DeleteUser(int64) *errors.RestErr
+	SearchUser(string) (users.Users, *errors.RestErr)
+}
+
 // CreateUser creates a new user in the database
-func CreateUser(u users.User) (*users.User, *errors.RestErr) {
+func (s *UserService) CreateUser(u users.User) (*users.User, *errors.RestErr) {
 	if valid := u.Validate(); !valid {
 		return nil, errors.NewBadRequestError("invalid user data")
 	}
@@ -25,7 +42,7 @@ func CreateUser(u users.User) (*users.User, *errors.RestErr) {
 }
 
 // GetUser returns user if present
-func GetUser(userID int64) (*users.User, *errors.RestErr) {
+func (s *UserService) GetUser(userID int64) (*users.User, *errors.RestErr) {
 	user := &users.User{}
 	if err := user.Get(userID); err != nil {
 		return nil, err
@@ -34,8 +51,8 @@ func GetUser(userID int64) (*users.User, *errors.RestErr) {
 }
 
 // UpdateUser updates a user
-func UpdateUser(u users.User, isPatch bool) (*users.User, *errors.RestErr) {
-	current, err := GetUser(u.ID)
+func (s *UserService) UpdateUser(u users.User, isPatch bool) (*users.User, *errors.RestErr) {
+	current, err := s.GetUser(u.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -65,8 +82,8 @@ func UpdateUser(u users.User, isPatch bool) (*users.User, *errors.RestErr) {
 }
 
 // DeleteUser api
-func DeleteUser(uid int64) *errors.RestErr {
-	user, err := GetUser(uid)
+func (s *UserService) DeleteUser(uid int64) *errors.RestErr {
+	user, err := s.GetUser(uid)
 	if err != nil {
 		return err
 	}
@@ -77,8 +94,8 @@ func DeleteUser(uid int64) *errors.RestErr {
 	return nil
 }
 
-// Search returns users matching passed argument
-func Search(status string) (users.Users, *errors.RestErr) {
+// SearchUser returns users matching passed argument
+func (s *UserService) SearchUser(status string) (users.Users, *errors.RestErr) {
 	dao := users.User{}
 	return dao.FindByStatus(status)
 }

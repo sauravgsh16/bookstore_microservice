@@ -7,7 +7,9 @@ import (
 )
 
 const (
-	StatusActive   = "active"
+	// StatusActive User active status string
+	StatusActive = "active"
+	// StatusInactive User inactive status string
 	StatusInactive = "inactive"
 )
 
