@@ -11,12 +11,12 @@ import (
 	"github.com/sauravgsh16/bookstore_users-api/utils/errors"
 )
 
-func getUserID(idStr string) (int64, *errors.RestErr) {
+func getUserID(idStr string) (int, *errors.RestErr) {
 	uid, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		return 0, errors.NewBadRequestError("user id should be a number")
 	}
-	return uid, nil
+	return int(uid), nil
 }
 
 // Get returns a user

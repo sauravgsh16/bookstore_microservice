@@ -17,10 +17,10 @@ type UserService struct{}
 
 // UserInterface describes methods to be implemented
 type UserInterface interface {
-	GetUser(int64) (*users.User, *errors.RestErr)
+	GetUser(int) (*users.User, *errors.RestErr)
 	CreateUser(users.User) (*users.User, *errors.RestErr)
 	UpdateUser(users.User, bool) (*users.User, *errors.RestErr)
-	DeleteUser(int64) *errors.RestErr
+	DeleteUser(int) *errors.RestErr
 	SearchUser(string) (users.Users, *errors.RestErr)
 }
 
@@ -42,7 +42,7 @@ func (s *UserService) CreateUser(u users.User) (*users.User, *errors.RestErr) {
 }
 
 // GetUser returns user if present
-func (s *UserService) GetUser(userID int64) (*users.User, *errors.RestErr) {
+func (s *UserService) GetUser(userID int) (*users.User, *errors.RestErr) {
 	user := &users.User{}
 	if err := user.Get(userID); err != nil {
 		return nil, err
@@ -82,7 +82,7 @@ func (s *UserService) UpdateUser(u users.User, isPatch bool) (*users.User, *erro
 }
 
 // DeleteUser api
-func (s *UserService) DeleteUser(uid int64) *errors.RestErr {
+func (s *UserService) DeleteUser(uid int) *errors.RestErr {
 	user, err := s.GetUser(uid)
 	if err != nil {
 		return err

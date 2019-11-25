@@ -45,7 +45,7 @@ func handleDBError(err error) *errors.RestErr {
 }
 
 // Get populates the user pointer or returns error if not found
-func (u *User) Get(userID int64) *errors.RestErr {
+func (u *User) Get(userID int) *errors.RestErr {
 	conn, ctx := getConn()
 	defer conn.Close()
 
@@ -77,7 +77,7 @@ func (u *User) Save() *errors.RestErr {
 		return errors.NewInternalServerError("database error")
 	}
 
-	var returnedID int64
+	var returnedID int
 
 	if err = stmt.QueryRowContext(ctx, u.FirstName, u.LastName, u.Email, u.DateCreated, u.Status, u.Password).Scan(&returnedID); err != nil {
 		if err := handleDBError(err); err != nil {
