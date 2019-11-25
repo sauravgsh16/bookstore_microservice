@@ -8,6 +8,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/sauravgsh16/bookstore_users-api/logger"
+
 	"github.com/lib/pq"
 
 	"github.com/sauravgsh16/bookstore_users-api/datasource/postgres/usersdb"
@@ -36,6 +38,7 @@ func handleDBError(err error) *errors.RestErr {
 	err = postgres.ParseError(err)
 	dbErr, ok := err.(*pq.Error)
 	if ok {
+		logger.Error("Query failed with error: ", err)
 		return errors.NewBadRequestError(dbErr.Message)
 	}
 	return nil
@@ -48,7 +51,8 @@ func (u *User) Get(userID int64) *errors.RestErr {
 
 	stmt, err := conn.PrepareContext(ctx, querySelectUser)
 	if err != nil {
-		return errors.NewInternalServerError(err.Error())
+		logger.Error("failed to prepare statement: ", err)
+		return errors.NewInternalServerError("database error")
 	}
 
 	row := stmt.QueryRowContext(ctx, userID)
@@ -69,7 +73,8 @@ func (u *User) Save() *errors.RestErr {
 
 	stmt, err := conn.PrepareContext(ctx, queryInsertUser)
 	if err != nil {
-		return errors.NewInternalServerError(err.Error())
+		logger.Error("failed to prepare statement: ", err)
+		return errors.NewInternalServerError("database error")
 	}
 
 	var returnedID int64
@@ -92,14 +97,16 @@ func (u *User) Update() *errors.RestErr {
 
 	stmt, err := conn.PrepareContext(ctx, queryUpdateuser)
 	if err != nil {
-		return errors.NewInternalServerError(err.Error())
+		logger.Error("failed to prepare statement: ", err)
+		return errors.NewInternalServerError("database error")
 	}
 
 	if _, err = stmt.ExecContext(ctx, u.FirstName, u.LastName, u.Email, u.ID); err != nil {
 		if err := handleDBError(err); err != nil {
 			return err
 		}
-		return errors.NewInternalServerError(fmt.Sprintf("error when trying to update user: %s", err.Error()))
+		logger.Error("failed to execute update query, error: ", err)
+		return errors.NewInternalServerError("database error when trying to update")
 	}
 	return nil
 }
@@ -111,14 +118,16 @@ func (u *User) Delete() *errors.RestErr {
 
 	stmt, err := conn.PrepareContext(ctx, queryDeleteUser)
 	if err != nil {
-		return errors.NewInternalServerError(err.Error())
+		logger.Error("failed to prepare statement: ", err)
+		return errors.NewInternalServerError("database error")
 	}
 
 	if _, err = stmt.ExecContext(ctx, u.ID); err != nil {
 		if err := handleDBError(err); err != nil {
 			return err
 		}
-		return errors.NewInternalServerError(fmt.Sprintf("error when trying to delete user: %s", err.Error()))
+		logger.Error("failed to execute delete query, error: ", err)
+		return errors.NewInternalServerError("database error when trying to delete user")
 	}
 	return nil
 }
@@ -130,7 +139,8 @@ func (u *User) FindByStatus(status string) ([]*User, *errors.RestErr) {
 
 	stmt, err := conn.PrepareContext(ctx, queryFindUserByStatus)
 	if err != nil {
-		return nil, errors.NewInternalServerError(err.Error())
+		logger.Error("failed to prepare statement: ", err)
+		return nil, errors.NewInternalServerError("database error")
 	}
 
 	rows, err := stmt.QueryContext(ctx, status)
@@ -138,7 +148,8 @@ func (u *User) FindByStatus(status string) ([]*User, *errors.RestErr) {
 		if err := handleDBError(err); err != nil {
 			return nil, err
 		}
-		return nil, errors.NewInternalServerError(err.Error())
+		logger.Error("failed to execute delete query, error: ", err)
+		return nil, errors.NewInternalServerError("database error when trying to execute query")
 	}
 	defer rows.Close()
 
@@ -150,12 +161,14 @@ func (u *User) FindByStatus(status string) ([]*User, *errors.RestErr) {
 			if err := handleDBError(err); err != nil {
 				return nil, err
 			}
-			return nil, errors.NewInternalServerError(err.Error())
+			logger.Error("failed to scan rows, error: ", err)
+			return nil, errors.NewInternalServerError("database error")
 		}
 		users = append(users, u)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, errors.NewInternalServerError(err.Error())
+		logger.Error("Row error: ", err)
+		return nil, errors.NewInternalServerError("database error")
 	}
 	if len(users) == 0 {
 		return nil, errors.NewNotFoundError(fmt.Sprintf("Users with status - %s - not found", status))
