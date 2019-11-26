@@ -32,9 +32,5 @@ func (r *Resolver) UsersResolverFunc(p graphql.ResolveParams) (interface{}, erro
 		return nil, fmt.Errorf(err.Error)
 	}
 
-	for _, u := range users {
-		fmt.Printf("%+v\n", u)
-	}
-
 	return users, nil
 }

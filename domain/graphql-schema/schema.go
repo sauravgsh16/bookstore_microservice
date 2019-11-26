@@ -37,19 +37,8 @@ func InitQL(r services.GraphQLResolvers) {
 		},
 	})
 
-	/*
-		var usersType = graphql.NewObject(graphql.ObjectConfig{
-			Name: "Users",
-			Fields: graphql.Fields{
-				"users": &graphql.Field{
-					Type: graphql.NewList(userType),
-				},
-			},
-		})
-	*/
-
 	fields := graphql.Fields{
-		"user": &graphql.Field{
+		"User": &graphql.Field{
 			Type: graphql.Type(userType),
 			Args: graphql.FieldConfigArgument{
 				"id": &graphql.ArgumentConfig{
@@ -58,7 +47,7 @@ func InitQL(r services.GraphQLResolvers) {
 			},
 			Resolve: r.UserResolverFunc,
 		},
-		"users": &graphql.Field{
+		"Users": &graphql.Field{
 			Type: graphql.NewList(userType),
 			Args: graphql.FieldConfigArgument{
 				"status": &graphql.ArgumentConfig{
