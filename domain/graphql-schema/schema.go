@@ -2,6 +2,7 @@ package schema
 
 import (
 	"fmt"
+
 	"github.com/graphql-go/graphql"
 	"github.com/sauravgsh16/bookstore_users-api/logger"
 	"github.com/sauravgsh16/bookstore_users-api/services"
@@ -36,17 +37,19 @@ func InitQL(r services.GraphQLResolvers) {
 		},
 	})
 
-	var usersType = graphql.NewObject(graphql.ObjectConfig{
-		Name: "Users",
-		Fields: graphql.Fields{
-			"users": &graphql.Field{
-				Type: graphql.NewList(userType),
+	/*
+		var usersType = graphql.NewObject(graphql.ObjectConfig{
+			Name: "Users",
+			Fields: graphql.Fields{
+				"users": &graphql.Field{
+					Type: graphql.NewList(userType),
+				},
 			},
-		},
-	})
+		})
+	*/
 
 	fields := graphql.Fields{
-		"User": &graphql.Field{
+		"user": &graphql.Field{
 			Type: graphql.Type(userType),
 			Args: graphql.FieldConfigArgument{
 				"id": &graphql.ArgumentConfig{
@@ -55,8 +58,8 @@ func InitQL(r services.GraphQLResolvers) {
 			},
 			Resolve: r.UserResolverFunc,
 		},
-		"Users": &graphql.Field{
-			Type: graphql.NewList(usersType),
+		"users": &graphql.Field{
+			Type: graphql.NewList(userType),
 			Args: graphql.FieldConfigArgument{
 				"status": &graphql.ArgumentConfig{
 					Type: graphql.String,
@@ -81,3 +84,24 @@ func InitQL(r services.GraphQLResolvers) {
 	}
 	logger.Info("Successfully initialized GraphQL")
 }
+
+/*
+Usage
+
+Users:
+{
+  users(status: "active") {
+    first_name
+    last_name
+  }
+}
+
+User:
+
+{
+  user(id: 3) {
+    id
+    first_name
+  }
+}
+*/

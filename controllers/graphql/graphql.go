@@ -3,7 +3,7 @@ package graphql
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/graphql-go/handler"
-	"github.com/sauravgsh16/bookstore_users-api/domain/graphql-schema"
+	schema "github.com/sauravgsh16/bookstore_users-api/domain/graphql-schema"
 	"github.com/sauravgsh16/bookstore_users-api/services"
 )
 

@@ -2,6 +2,7 @@ package services
 
 import (
 	"fmt"
+
 	"github.com/graphql-go/graphql"
 	// "github.com/sauravgsh16/bookstore_users-api/utils/errors"
 )
@@ -30,5 +31,10 @@ func (r *Resolver) UsersResolverFunc(p graphql.ResolveParams) (interface{}, erro
 	if err != nil {
 		return nil, fmt.Errorf(err.Error)
 	}
+
+	for _, u := range users {
+		fmt.Printf("%+v\n", u)
+	}
+
 	return users, nil
 }
