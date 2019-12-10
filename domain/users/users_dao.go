@@ -23,6 +23,7 @@ const (
 	queryUpdateuser       = `UPDATE users SET first_name=($1), last_name=($2), email=($3) WHERE ID=($4);`
 	queryDeleteUser       = `DELETE FROM users WHERE ID=($1);`
 	queryFindUserByStatus = `SELECT ID, FIRST_NAME, LAST_NAME, EMAIL, DATE_CREATED, STATUS FROM users WHERE STATUS=($1);`
+	queryFindByEmailPwd   = `SELECT ID, FIRST_NAME, LAST_NAME, EMAIL, DATE_CREATED, STATUS FROM users WHERE EMAIL=($1) AND PASSWORD=($2);`
 )
 
 var (
@@ -107,6 +108,31 @@ func (u *User) Update() *errors.RestErr {
 		}
 		logger.Error("failed to execute update query, error: ", err)
 		return errors.NewInternalServerError("database error when trying to update")
+	}
+	return nil
+}
+
+// FindByEmailPassword finds user by email and password
+func (u *User) FindByEmailPassword(email, pwd string) *errors.RestErr {
+	conn, ctx := getConn()
+	defer conn.Close()
+
+	stmt, err := conn.PrepareContext(ctx, queryFindByEmailPwd)
+	if err != nil {
+		logger.Error("failed to prepare statement: ", err)
+	}
+
+	fmt.Printf("%#v\n", stmt)
+
+	row := stmt.QueryRowContext(ctx, email, pwd)
+
+	fmt.Printf("%#v\n", row)
+
+	if err := row.Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.DateCreated, &u.Status); err != nil {
+		if err := handleDBError(err); err != nil {
+			return err
+		}
+		return errors.NewNotFoundError(fmt.Sprintf("failed to retrieve rows: %s", err.Error()))
 	}
 	return nil
 }

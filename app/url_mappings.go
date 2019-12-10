@@ -15,6 +15,7 @@ func mapUrls() {
 	router.PATCH("/users/:user_id", users.Update)
 	router.DELETE("/users/:user_id", users.Delete)
 	router.GET("/internal/users/search", users.Search)
+	router.POST("/users/login", users.LoginUser)
 
 	// GraphQL
 	router.GET("/graphql", graphql.Handler())

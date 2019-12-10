@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/sauravgsh16/bookstore_users-api/utils/crypto"
+
 	"github.com/gin-gonic/gin"
 	"github.com/sauravgsh16/bookstore_users-api/domain/users"
 	"github.com/sauravgsh16/bookstore_users-api/services"
@@ -32,8 +34,6 @@ func Get(c *gin.Context) {
 		c.JSON(getErr.Status, getErr)
 		return
 	}
-
-	fmt.Printf("%v\n", user)
 
 	isPublic := c.GetHeader("X-Public") == "true"
 	c.JSON(http.StatusOK, user.Marshall(isPublic))
@@ -115,4 +115,25 @@ func Search(c *gin.Context) {
 
 	isPublic := c.GetHeader("X-Public") == "true"
 	c.JSON(http.StatusOK, users.Marshall(isPublic))
+}
+
+// LoginUser logs in a user
+func LoginUser(c *gin.Context) {
+	var req users.LoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		rstErr := errors.NewBadRequestError("invalid request body")
+		c.JSON(rstErr.Status, rstErr)
+		return
+	}
+
+	req.Password = crypto.GetMd5(req.Password)
+
+	user, err := services.UserServ.LoginUser(req)
+	if err != nil {
+		c.JSON(err.Status, err)
+		return
+	}
+
+	isPublic := c.GetHeader("X-Public") == "true"
+	c.JSON(http.StatusOK, user.Marshall(isPublic))
 }

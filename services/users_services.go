@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+
 	"github.com/sauravgsh16/bookstore_users-api/domain/users"
 	"github.com/sauravgsh16/bookstore_users-api/utils/crypto"
 	"github.com/sauravgsh16/bookstore_users-api/utils/dates"
@@ -22,6 +24,7 @@ type UserInterface interface {
 	UpdateUser(users.User, bool) (*users.User, *errors.RestErr)
 	DeleteUser(int) *errors.RestErr
 	SearchUser(string) (users.Users, *errors.RestErr)
+	LoginUser(users.LoginRequest) (*users.User, *errors.RestErr)
 }
 
 // CreateUser creates a new user in the database
@@ -98,4 +101,16 @@ func (s *UserService) DeleteUser(uid int) *errors.RestErr {
 func (s *UserService) SearchUser(status string) (users.Users, *errors.RestErr) {
 	dao := users.User{}
 	return dao.FindByStatus(status)
+}
+
+// LoginUser logs in a user
+func (s *UserService) LoginUser(req users.LoginRequest) (*users.User, *errors.RestErr) {
+	user := &users.User{}
+
+	fmt.Printf("%#v\n", req)
+
+	if err := user.FindByEmailPassword(req.Email, req.Password); err != nil {
+		return nil, err
+	}
+	return user, nil
 }
